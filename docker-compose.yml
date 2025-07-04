@@ -32,6 +32,7 @@ services:
     networks:
     - heuristic-network
     tty: true
+    restart: unless-stopped
 
 networks:
   heuristic-network:
