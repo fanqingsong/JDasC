@@ -55,6 +55,23 @@ Steps are:
 * Jenkins configuration as code will read jenkins.yaml configuration file and apply all configuration to both Jenkins and all the plugins.
 * Jenkins process will finish its boot procedure and is ready to for use.
 
+## Jenkins Configuration as Code (JCasC) 推荐流程
+
+1. **首次部署时**
+   - 提供一个空的 `jenkins.yaml`（内容可以为空，或仅有一行 `---`）。
+   - 这样 Jenkins 启动不会报错，也不会强制覆盖现有配置。
+
+2. **手动在 Jenkins Web UI 完成所有配置**
+   - 包括插件、凭据、系统设置等。
+
+3. **备份配置到 jenkins.yaml**
+   - 在 Jenkins Web UI 进入 `Manage Jenkins` → `Configuration as Code` → `View Configuration`，点击 `Download` 或 `Export`，将当前配置导出为 `jenkins.yaml`。
+   - 用这个文件替换你项目中的 `jenkins.yaml`，以后再部署就能自动还原所有配置。
+
+4. **后续自动化部署**
+   - 只需挂载 `jenkins.yaml`，Jenkins 启动时会自动应用所有配置，实现"即代码即配置"。
+
+> 建议：保持 `jenkins.yaml` 挂载，首次为空，配置好后及时导出并覆盖项目中的 `jenkins.yaml`，后续所有环境都能一键还原 Jenkins 配置。
 
 ### Run
 
@@ -62,12 +79,28 @@ This will pull and start latest docker images
 
     docker-compose pull
     docker-compose up
+
+Alternatively, you can use the provided management scripts:
+
+    ./bin/start.sh      # Start Jenkins service
+    ./bin/stop.sh       # Stop Jenkins service  
+    ./bin/restart.sh    # Restart Jenkins service
    
 If you have problem with mounting `/var/run/docker.sock` then remove it from `docker-compose.yml` but you won't be able to run jobs which use docker as an agent.
 
+## Management Scripts
+
+The project includes several management scripts in the `bin/` directory for easy Jenkins service management:
+
+- **`bin/start.sh`** - Starts Jenkins service with automatic directory creation
+- **`bin/stop.sh`** - Stops Jenkins service gracefully
+- **`bin/restart.sh`** - Restarts Jenkins service (stop + start)
+
+These scripts provide a convenient way to manage the Jenkins service lifecycle without remembering complex docker-compose commands.
+
 Wait for Jenkins to boot up. Authentication is disabled. Open a browser and go to:
 
-    localhost:8080
+    localhost:8888
     
 If you don't see any jobs run Generate_jobs_from_code job to genarate jobs from all jenkinsfiles.
 
@@ -96,7 +129,7 @@ If you just want to test new plugins without committing them to git then stop at
 * Restart jenkins to verify it's still working.
 * Copy output of the following command to `plugins.txt` file (located in this repository):
 
-        curl -s http://localhost:8080/pluginManager/api/json?depth=1 \
+        curl -s http://localhost:8888/pluginManager/api/json?depth=1 \
           | jq -r '.plugins[] | "\(.shortName):\(.version)"' \
           | sort
 
@@ -113,3 +146,19 @@ If you just want to test new plugins without committing them to git then stop at
 To completeley clean and rebuild everything run this command:
 
         docker-compose down && docker-compose build --no-cache && docker-compose up --force-recreate
+
+## 多环境 JCasC 配置支持
+
+本项目支持 dev、staging、production 多环境独立配置：
+
+1. 在 `env/` 目录下分别维护 `jenkins.dev.yaml`、`jenkins.staging.yaml`、`jenkins.prod.yaml`。
+2. 启动 Jenkins 时通过参数选择环境：
+
+    ./bin/start.sh dev
+    ./bin/start.sh staging
+    ./bin/start.sh production
+
+3. 脚本会自动挂载对应的 JCasC 配置文件到容器内。
+4. 各环境配置互不影响，便于测试、预发、生产隔离。
+
+> 如需新增环境，只需在 `env/` 目录下添加对应的 yaml 文件即可。

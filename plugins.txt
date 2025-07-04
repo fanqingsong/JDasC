@@ -1,7 +1,7 @@
 active-directory
 artifactory
 authorize-project
-blueocean
+blueocean:latest
 cloudbees-folder
 cobertura
 configuration-as-code

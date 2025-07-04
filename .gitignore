@@ -4,6 +4,6 @@
 .vscode/
 
 # Jenkins
-jobs/
-users/
-master.key
+jenkins_home/jobs/
+jenkins_home/users/
+jenkins_home/master.key
