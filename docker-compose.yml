@@ -1,4 +1,5 @@
 services:
+
   jenkins:
     image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/jenkins/jenkins:lts
     environment:
@@ -32,8 +33,7 @@ services:
     networks:
     - heuristic-network
     tty: true
-    restart: unless-stopped
 
 networks:
   heuristic-network:
-    external: true
+    driver: bridge

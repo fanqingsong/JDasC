@@ -55,23 +55,23 @@ Steps are:
 * Jenkins configuration as code will read jenkins.yaml configuration file and apply all configuration to both Jenkins and all the plugins.
 * Jenkins process will finish its boot procedure and is ready to for use.
 
-## Jenkins Configuration as Code (JCasC) 推荐流程
+## Jenkins Configuration as Code (JCasC) Recommended Workflow
 
-1. **首次部署时**
-   - 提供一个空的 `jenkins.yaml`（内容可以为空，或仅有一行 `---`）。
-   - 这样 Jenkins 启动不会报错，也不会强制覆盖现有配置。
+1. **Initial Deployment**
+   - Provide an empty `jenkins.yaml` (content can be empty, or just a single line `---`).
+   - This way Jenkins startup won't error and won't force overwrite existing configurations.
 
-2. **手动在 Jenkins Web UI 完成所有配置**
-   - 包括插件、凭据、系统设置等。
+2. **Complete All Configuration Manually in Jenkins Web UI**
+   - Including plugins, credentials, system settings, etc.
 
-3. **备份配置到 jenkins.yaml**
-   - 在 Jenkins Web UI 进入 `Manage Jenkins` → `Configuration as Code` → `View Configuration`，点击 `Download` 或 `Export`，将当前配置导出为 `jenkins.yaml`。
-   - 用这个文件替换你项目中的 `jenkins.yaml`，以后再部署就能自动还原所有配置。
+3. **Backup Configuration to jenkins.yaml**
+   - In Jenkins Web UI, go to `Manage Jenkins` → `Configuration as Code` → `View Configuration`, click `Download` or `Export` to export current configuration as `jenkins.yaml`.
+   - Replace the `jenkins.yaml` in your project with this file, and future deployments will automatically restore all configurations.
 
-4. **后续自动化部署**
-   - 只需挂载 `jenkins.yaml`，Jenkins 启动时会自动应用所有配置，实现"即代码即配置"。
+4. **Subsequent Automated Deployments**
+   - Simply mount `jenkins.yaml`, and Jenkins will automatically apply all configurations on startup, achieving "configuration as code".
 
-> 建议：保持 `jenkins.yaml` 挂载，首次为空，配置好后及时导出并覆盖项目中的 `jenkins.yaml`，后续所有环境都能一键还原 Jenkins 配置。
+> Recommendation: Keep `jenkins.yaml` mounted, initially empty, export and replace the `jenkins.yaml` in your project after configuration is complete, and all environments can restore Jenkins configuration with one click.
 
 ### Run
 
@@ -80,23 +80,45 @@ This will pull and start latest docker images
     docker-compose pull
     docker-compose up
 
-Alternatively, you can use the provided management scripts:
+You can also use the provided environment-specific management scripts:
 
-    ./bin/start.sh      # Start Jenkins service
-    ./bin/stop.sh       # Stop Jenkins service  
-    ./bin/restart.sh    # Restart Jenkins service
+# Development Environment
+    ./bin/start-dev.sh      # Start Jenkins development environment
+    ./bin/stop-dev.sh       # Stop Jenkins development environment  
+    ./bin/restart-dev.sh    # Restart Jenkins development environment
+
+# Staging Environment
+    ./bin/start-staging.sh  # Start Jenkins staging environment
+    ./bin/stop-staging.sh   # Stop Jenkins staging environment
+    ./bin/restart-staging.sh # Restart Jenkins staging environment
+
+# Production Environment
+    ./bin/start-prod.sh     # Start Jenkins production environment
+    ./bin/stop-prod.sh      # Stop Jenkins production environment
+    ./bin/restart-prod.sh   # Restart Jenkins production environment
    
 If you have problem with mounting `/var/run/docker.sock` then remove it from `docker-compose.yml` but you won't be able to run jobs which use docker as an agent.
 
 ## Management Scripts
 
-The project includes several management scripts in the `bin/` directory for easy Jenkins service management:
+The project includes environment-specific management scripts in the `bin/` directory for easy Jenkins service management:
 
-- **`bin/start.sh`** - Starts Jenkins service with automatic directory creation
-- **`bin/stop.sh`** - Stops Jenkins service gracefully
-- **`bin/restart.sh`** - Restarts Jenkins service (stop + start)
+### Development Environment
+- **`bin/start-dev.sh`** - Starts Jenkins development environment with automatic directory creation
+- **`bin/stop-dev.sh`** - Stops Jenkins development environment gracefully
+- **`bin/restart-dev.sh`** - Restarts Jenkins development environment (stop + start)
 
-These scripts provide a convenient way to manage the Jenkins service lifecycle without remembering complex docker-compose commands.
+### Staging Environment
+- **`bin/start-staging.sh`** - Starts Jenkins staging environment with automatic directory creation
+- **`bin/stop-staging.sh`** - Stops Jenkins staging environment gracefully
+- **`bin/restart-staging.sh`** - Restarts Jenkins staging environment (stop + start)
+
+### Production Environment
+- **`bin/start-prod.sh`** - Starts Jenkins production environment with automatic directory creation
+- **`bin/stop-prod.sh`** - Stops Jenkins production environment gracefully
+- **`bin/restart-prod.sh`** - Restarts Jenkins production environment (stop + start)
+
+These scripts provide a convenient way to manage the Jenkins service lifecycle for different environments without remembering complex docker-compose commands or environment parameters.
 
 Wait for Jenkins to boot up. Authentication is disabled. Open a browser and go to:
 
@@ -147,18 +169,23 @@ To completeley clean and rebuild everything run this command:
 
         docker-compose down && docker-compose build --no-cache && docker-compose up --force-recreate
 
-## 多环境 JCasC 配置支持
+## Multi-Environment JCasC Configuration Support
 
-本项目支持 dev、staging、production 多环境独立配置：
+This project supports independent configuration for dev, staging, and production environments:
 
-1. 在 `env/` 目录下分别维护 `jenkins.dev.yaml`、`jenkins.staging.yaml`、`jenkins.prod.yaml`。
-2. 启动 Jenkins 时通过参数选择环境：
+1. Maintain `jenkins.dev.yaml`, `jenkins.staging.yaml`, and `jenkins.prod.yaml` respectively in the `env/` directory.
+2. Use environment-specific scripts to start Jenkins:
 
-    ./bin/start.sh dev
-    ./bin/start.sh staging
-    ./bin/start.sh production
+    # Development Environment
+    ./bin/start-dev.sh
+    
+    # Staging Environment  
+    ./bin/start-staging.sh
+    
+    # Production Environment
+    ./bin/start-prod.sh
 
-3. 脚本会自动挂载对应的 JCasC 配置文件到容器内。
-4. 各环境配置互不影响，便于测试、预发、生产隔离。
+3. The script will automatically mount the corresponding JCasC configuration file into the container.
+4. Configurations for each environment are independent, facilitating testing, staging, and production isolation.
 
-> 如需新增环境，只需在 `env/` 目录下添加对应的 yaml 文件即可。
+> To add a new environment, simply add the corresponding yaml file in the `env/` directory and create the corresponding management scripts.
